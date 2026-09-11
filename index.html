@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chakaram 3D • சக்கரம் தாயக் களம் (Chowka Bara)</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☸</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+    <!-- 3D WebGL Viewport -->
+    <div id="webgl-container"></div>
+
+    <!-- Front Page Setup & Board Selection Launcher Modal -->
+    <div id="welcome-modal" class="welcome-modal-backdrop visible">
+        <div class="welcome-banner">
+            <div class="banner-header">
+                <span class="emblem-symbol">☸</span>
+                <h2>சக்கரம் • CHAKARAM 3D</h2>
+                <div class="banner-sub">Traditional Indian Chowka Bara / Katte Mane Board Game</div>
+            </div>
+            
+            <!-- Section 1: Board Size Matrix Choice (5x5 vs 7x7) -->
+            <div class="setup-section">
+                <label class="section-label">📐 களம் அளவு (Select Board Matrix):</label>
+                <div class="card-selector-row" id="board-size-group">
+                    <button class="selector-card active" data-size="5">
+                        <span class="card-badge">5 × 5</span>
+                        <strong>Classic 5 Matrix</strong>
+                        <small>25 Cells • 4 Safe Houses</small>
+                    </button>
+                    <button class="selector-card" data-size="7">
+                        <span class="card-badge">7 × 7</span>
+                        <strong>Grand 7 Matrix</strong>
+                        <small>49 Cells • 12 Safe Houses</small>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section 2: Game Mode (1P vs AI, 2P Local, 4P Local) -->
+            <div class="setup-section">
+                <label class="section-label">🎮 ஆட்ட முறை (Game Mode):</label>
+                <div class="mode-pills-grid" id="mode-pills-group">
+                    <button class="mode-pill-card active" data-mode="1P_VS_AI">
+                        <span class="pill-icon">🤖</span>
+                        <div class="pill-text">
+                            <strong>1 Player vs AI</strong>
+                            <small>Single Player vs 3 AI</small>
+                        </div>
+                    </button>
+
+                    <button class="mode-pill-card" data-mode="2P_LOCAL">
+                        <span class="pill-icon">👥</span>
+                        <div class="pill-text">
+                            <strong>2 Players Local</strong>
+                            <small>South vs North</small>
+                        </div>
+                    </button>
+
+                    <button class="mode-pill-card" data-mode="4P_LOCAL">
+                        <span class="pill-icon">👨‍👩‍👧‍👦</span>
+                        <div class="pill-text">
+                            <strong>4 Players Local</strong>
+                            <small>Pass & Play Match</small>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section 3: Chozhi Cowrie Count -->
+            <div class="setup-section">
+                <label class="section-label">🐚 சோழிகள் (Cowrie Shells):</label>
+                <div class="card-selector-row" id="shell-count-group">
+                    <button class="selector-card active" data-shells="6">
+                        <strong>6 Chozhi Shells</strong>
+                        <small>Rolls: 1, 2, 3, 4, 5, 6, 12</small>
+                    </button>
+                    <button class="selector-card" data-shells="4">
+                        <strong>4 Chozhi Shells</strong>
+                        <small>Rolls: 1, 2, 3, 4, 8</small>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Start Match Button -->
+            <div class="banner-footer">
+                <button id="btn-dismiss-welcome" class="btn-start-game">
+                    <span>🎲 ஆட்டத்தைத் தொடங்கு (START GAME)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="victory-modal-backdrop">
+        <div class="victory-banner">
+            <span class="emblem-symbol">🏆</span>
+            <h2 id="winner-title">வெற்றி வாகை!</h2>
+            <div id="winner-desc" class="banner-sub">All 4 coins crowned at Surya Chakram!</div>
+            <div class="banner-footer" style="margin-top: 1.5rem;">
+                <button id="btn-play-again" class="btn-start-game">🔄 மீண்டும் விளையாடு (Play Again)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Overlay Layer -->
+    <div class="ui-overlay">
+        
+        <!-- Top Navigation Header -->
+        <header class="header-bar">
+            <div class="brand-section">
+                <div class="brand-emblem">☸</div>
+                <div class="title-group">
+                    <h1>சக்கரம் • CHAKARAM</h1>
+                    <div class="subtitle" id="board-subtitle">5x5 Board • 4 Players • 6 Chozhi</div>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button id="btn-start-game-header" class="btn-stone btn-highlight">⚙️ Setup / New Match</button>
+                <button id="btn-audio-mute" class="btn-stone">🔔 Sound On</button>
+            </div>
+        </header>
+
+        <!-- SPATIAL 4-PLAYER HOUSE HUDS (Placed near each house side) -->
+        
+        <!-- 1. NORTH PLAYER HOUSE HUD (Top Center) -->
+        <div id="player-hud-2" class="spatial-house-hud house-north">
+            <div class="hud-header">
+                <div class="p-color-dot" style="background: #8c4323;"></div>
+                <span class="p-title" id="hud-name-2">NORTH • வடக்கு</span>
+                <span class="turn-indicator-badge">TURN</span>
+            </div>
+            <div class="hud-stats">
+                <span class="stat-badge" title="Home Base">🏠 <strong id="hud-home-2">4</strong></span>
+                <span class="stat-badge" title="Active in Field">⚔️ <strong id="hud-active-2">0</strong></span>
+                <span class="stat-badge stat-crown" title="Crowned at Center">🏆 <strong id="hud-crowns-2">0/4</strong></span>
+            </div>
+            <div class="roll-callout" id="hud-roll-2">🎲 ready</div>
+        </div>
+
+        <!-- 2. WEST PLAYER HOUSE HUD (Left Edge) -->
+        <div id="player-hud-4" class="spatial-house-hud house-west">
+            <div class="hud-header">
+                <div class="p-color-dot" style="background: #a33b24;"></div>
+                <span class="p-title" id="hud-name-4">WEST • மேற்கு</span>
+                <span class="turn-indicator-badge">TURN</span>
+            </div>
+            <div class="hud-stats">
+                <span class="stat-badge" title="Home Base">🏠 <strong id="hud-home-4">4</strong></span>
+                <span class="stat-badge" title="Active in Field">⚔️ <strong id="hud-active-4">0</strong></span>
+                <span class="stat-badge stat-crown" title="Crowned at Center">🏆 <strong id="hud-crowns-4">0/4</strong></span>
+            </div>
+            <div class="roll-callout" id="hud-roll-4">🎲 ready</div>
+        </div>
+
+        <!-- 3. EAST PLAYER HOUSE HUD (Right Edge) -->
+        <div id="player-hud-3" class="spatial-house-hud house-east">
+            <div class="hud-header">
+                <div class="p-color-dot" style="background: #d9b177;"></div>
+                <span class="p-title" id="hud-name-3">EAST • கிழக்கு</span>
+                <span class="turn-indicator-badge">TURN</span>
+            </div>
+            <div class="hud-stats">
+                <span class="stat-badge" title="Home Base">🏠 <strong id="hud-home-3">4</strong></span>
+                <span class="stat-badge" title="Active in Field">⚔️ <strong id="hud-active-3">0</strong></span>
+                <span class="stat-badge stat-crown" title="Crowned at Center">🏆 <strong id="hud-crowns-3">0/4</strong></span>
+            </div>
+            <div class="roll-callout" id="hud-roll-3">🎲 ready</div>
+        </div>
+
+        <!-- 4. SOUTH PLAYER HOUSE HUD (Bottom Center) -->
+        <div id="player-hud-1" class="spatial-house-hud house-south active-turn">
+            <div class="hud-header">
+                <div class="p-color-dot" style="background: #d4883b;"></div>
+                <span class="p-title" id="hud-name-1">SOUTH • தெற்கு (YOU)</span>
+                <span class="turn-indicator-badge">TURN</span>
+            </div>
+            <div class="hud-stats">
+                <span class="stat-badge" title="Home Base">🏠 <strong id="hud-home-1">4</strong></span>
+                <span class="stat-badge" title="Active in Field">⚔️ <strong id="hud-active-1">0</strong></span>
+                <span class="stat-badge stat-crown" title="Crowned at Center">🏆 <strong id="hud-crowns-1">0/4</strong></span>
+            </div>
+            <div class="roll-callout" id="hud-roll-1">🎲 ready</div>
+        </div>
+
+        <!-- CENTER FLOATING ACTION & ROLL DOCK -->
+        <main class="main-ui">
+            <!-- Compact Commentary Log (Bottom Left) -->
+            <section class="commentary-dock">
+                <div class="dock-title">📜 Match Events</div>
+                <ul id="match-log-list" class="match-log-list">
+                    <li>⚔️ ஆட்டம் துவங்கியது!</li>
+                </ul>
+            </section>
+
+            <!-- Sleek Dice Roll Dock (Bottom Right) -->
+            <section class="chozhi-dock">
+                <div class="dock-header">
+                    <h3 id="chozhi-title">6 Chozhi Dice</h3>
+                    <div id="chozhi-visual" class="shell-icons">
+                        <span class="shell-icon shell-open">🐚</span>
+                        <span class="shell-icon shell-open">🐚</span>
+                        <span class="shell-icon shell-open">🐚</span>
+                        <span class="shell-icon shell-closed">🌑</span>
+                        <span class="shell-icon shell-closed">🌑</span>
+                        <span class="shell-icon shell-closed">🌑</span>
+                    </div>
+                </div>
+
+                <div id="score-card" class="score-reveal-card">
+                    <div id="score-number" class="score-number">🎲 Roll Chozhi</div>
+                    <div id="score-desc" class="score-desc">Click button to roll</div>
+                </div>
+
+                <button id="btn-roll-chozhi" class="btn-roll-chozhi">🎲 ROLL CHOZHI</button>
+            </section>
+        </main>
+
+        <!-- Bottom Controls Dock -->
+        <footer class="bottom-dock">
+            <div class="control-group">
+                <span class="label">Camera:</span>
+                <button class="btn-stone active" data-camera="cinematic">🎥 Cinematic</button>
+                <button class="btn-stone" data-camera="topdown">📐 Top-Down</button>
+                <button class="btn-stone" data-camera="chozhi">🐚 Chozhi</button>
+            </div>
+
+            <div class="dock-divider"></div>
+
+            <div class="control-group">
+                <span class="label">Board Stone:</span>
+                <button class="btn-stone active" data-theme="granite">Granite</button>
+                <button class="btn-stone" data-theme="sandstone">Sandstone</button>
+                <button class="btn-stone" data-theme="bronze">Bronze</button>
+                <button class="btn-stone" data-theme="terracotta">Terracotta</button>
+            </div>
+
+            <div class="dock-divider"></div>
+
+            <div class="control-group">
+                <span class="label">Light:</span>
+                <button class="btn-stone active" data-atmosphere="night">🪔 Temple</button>
+                <button class="btn-stone" data-atmosphere="dawn">🌅 Dawn</button>
+                <button class="btn-stone" data-atmosphere="golden">✨ Golden</button>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Application Scripts -->
+    <script src="audio.js"></script>
+    <script src="textures.js"></script>
+    <script src="gameEngine.js"></script>
+    <script src="scene.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

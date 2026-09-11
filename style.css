@@ -1,0 +1,675 @@
+/* ==========================================================================
+   Chakaram 3D (சக்கரம்) - Traditional Tamil Heritage Design System
+   Spatial 4-House HUD & Minimalist 3D Interface
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Outfit:wght@400;500;600;700;800&family=Mukta+Malar:wght@500;700&display=swap');
+
+:root {
+    --bg-dark: #0a0908;
+    --bg-glass: rgba(18, 16, 14, 0.85);
+    --bg-glass-active: rgba(28, 24, 20, 0.95);
+    --border-gold: #d4af37;
+    --gold-bright: #ffd700;
+    --border-glass: rgba(212, 175, 55, 0.28);
+    
+    --text-primary: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-gold: #f0d388;
+    
+    --p1-south: #d4883b;
+    --p2-north: #8c4323;
+    --p3-east: #d9b177;
+    --p4-west: #a33b24;
+
+    --font-heading: 'Cinzel', serif;
+    --font-ui: 'Outfit', sans-serif;
+    --font-tamil: 'Mukta Malar', sans-serif;
+
+    --radius-lg: 20px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+
+    --shadow-gold: 0 0 24px rgba(255, 215, 0, 0.4);
+    --transition-fast: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-dark);
+    font-family: var(--font-tamil), var(--font-ui);
+    color: var(--text-primary);
+}
+
+#webgl-container {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0; left: 0;
+    z-index: 1;
+}
+
+/* ==========================================================================
+   UI Overlay & Navigation Header
+   ========================================================================== */
+.ui-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.header-bar {
+    height: 60px;
+    padding: 0 20px;
+    background: rgba(10, 9, 8, 0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-glass);
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-emblem {
+    font-size: 26px;
+    color: var(--gold-bright);
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+    animation: rotateSlow 25s linear infinite;
+}
+
+@keyframes rotateSlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.title-group h1 {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--gold-bright);
+    letter-spacing: 1px;
+}
+
+.title-group .subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: -2px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-stone {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-glass);
+    color: var(--text-primary);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-stone:hover, .btn-stone.active {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--gold-bright);
+    color: var(--gold-bright);
+}
+
+.btn-highlight {
+    background: linear-gradient(135deg, #d4af37, #b8860b);
+    color: #000;
+    font-weight: 800;
+    border: none;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+}
+
+.btn-highlight:hover {
+    background: linear-gradient(135deg, #ffd700, #d4af37);
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   SPATIAL 4-HOUSE PLAYER HUDS (Placed near 3D Board Houses)
+   ========================================================================== */
+
+.spatial-house-hud {
+    position: absolute;
+    pointer-events: auto;
+    background: var(--bg-glass);
+    border: 1.5px solid var(--border-glass);
+    border-radius: 14px;
+    padding: 10px 14px;
+    backdrop-filter: blur(14px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 170px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Positioning near respective houses */
+.house-south {
+    bottom: 65px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.house-north {
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.house-east {
+    top: 48%;
+    right: 20px;
+    transform: translateY(-50%);
+}
+
+.house-west {
+    top: 48%;
+    left: 20px;
+    transform: translateY(-50%);
+}
+
+/* Active Turn Glow State */
+.spatial-house-hud.active-turn {
+    background: var(--bg-glass-active);
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 24px rgba(255, 215, 0, 0.6), 0 0 8px rgba(255, 215, 0, 0.3);
+    transform: translateX(-50%) scale(1.05);
+}
+
+.house-east.active-turn, .house-west.active-turn {
+    transform: translateY(-50%) scale(1.05);
+}
+
+.hud-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 4px;
+}
+
+.p-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px currentColor;
+}
+
+.p-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #ffffff;
+    flex: 1;
+}
+
+.spatial-house-hud.active-turn .p-title {
+    color: var(--gold-bright);
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+.turn-indicator-badge {
+    font-size: 9px;
+    font-weight: 800;
+    background: var(--gold-bright);
+    color: #000;
+    padding: 2px 6px;
+    border-radius: 10px;
+    display: none;
+    letter-spacing: 0.5px;
+    animation: pulseBadge 1.2s infinite;
+}
+
+@keyframes pulseBadge {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.spatial-house-hud.active-turn .turn-indicator-badge {
+    display: inline-block;
+}
+
+.hud-stats {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+}
+
+.stat-badge {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 2px 6px;
+    border-radius: 6px;
+    color: var(--text-muted);
+}
+
+.stat-badge strong {
+    color: #fff;
+}
+
+.stat-crown strong {
+    color: var(--gold-bright);
+}
+
+.roll-callout {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-gold);
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px dashed rgba(212, 175, 55, 0.3);
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.spatial-house-hud.active-turn .roll-callout {
+    border-color: var(--gold-bright);
+    background: rgba(255, 215, 0, 0.1);
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   Main HUD Area (Commentary Dock & Chozhi Dock)
+   ========================================================================== */
+.main-ui {
+    flex: 1;
+    position: relative;
+}
+
+.commentary-dock {
+    position: absolute;
+    bottom: 65px;
+    left: 20px;
+    width: 260px;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    backdrop-filter: blur(14px);
+    pointer-events: auto;
+}
+
+.dock-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-gold);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.match-log-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+    max-height: 90px;
+    overflow-y: auto;
+}
+
+.match-log-list li:first-child {
+    color: var(--gold-bright);
+    font-weight: 600;
+}
+
+.chozhi-dock {
+    position: absolute;
+    bottom: 65px;
+    right: 20px;
+    width: 270px;
+    background: var(--bg-glass);
+    border: 1.5px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    backdrop-filter: blur(14px);
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+}
+
+.dock-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dock-header h3 {
+    font-size: 12px;
+    color: var(--text-gold);
+}
+
+.shell-icons {
+    display: flex;
+    gap: 4px;
+    font-size: 15px;
+}
+
+.score-reveal-card {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    text-align: center;
+    transition: var(--transition-fast);
+}
+
+.score-reveal-card.prompt-glow {
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.4);
+}
+
+.score-number {
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--gold-bright);
+}
+
+.score-desc {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.btn-roll-chozhi {
+    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+    color: #000;
+    border: none;
+    padding: 10px;
+    border-radius: 20px;
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.3);
+    transition: var(--transition-fast);
+}
+
+.btn-roll-chozhi:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+    background: linear-gradient(135deg, #ffd700 0%, #d4af37 100%);
+}
+
+.btn-roll-chozhi:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ==========================================================================
+   Bottom Controls Dock
+   ========================================================================== */
+.bottom-dock {
+    height: 50px;
+    padding: 0 20px;
+    background: rgba(10, 9, 8, 0.9);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border-glass);
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.control-group .label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-right: 4px;
+}
+
+.dock-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-glass);
+}
+
+/* ==========================================================================
+   Setup & Front Page Launcher Modal
+   ========================================================================== */
+.welcome-modal-backdrop, .victory-modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(6, 5, 4, 0.88);
+    backdrop-filter: blur(16px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.welcome-modal-backdrop.visible, .victory-modal-backdrop.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.welcome-banner {
+    background: linear-gradient(145deg, #14110e 0%, #0d0b09 100%);
+    border: 2px solid var(--border-gold);
+    border-radius: var(--radius-lg);
+    padding: 24px 26px;
+    width: 100%;
+    max-width: 580px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(212, 175, 55, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+}
+
+.banner-header .emblem-symbol {
+    font-size: 30px;
+    color: var(--gold-bright);
+    display: block;
+    margin-bottom: 2px;
+    text-shadow: 0 0 14px rgba(255, 215, 0, 0.6);
+}
+
+.banner-header h2 {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--gold-bright);
+    letter-spacing: 1px;
+}
+
+.banner-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.setup-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-gold);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-selector-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.selector-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: 12px 10px;
+    cursor: pointer;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    position: relative;
+    transition: var(--transition-fast);
+}
+
+.selector-card:hover {
+    border-color: rgba(255, 215, 0, 0.5);
+    background: rgba(255, 215, 0, 0.06);
+}
+
+.selector-card.active {
+    background: rgba(212, 175, 55, 0.16);
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.25);
+}
+
+.card-badge {
+    position: absolute;
+    top: -8px;
+    right: 10px;
+    background: var(--gold-bright);
+    color: #000;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 8px;
+}
+
+.selector-card strong {
+    font-size: 12px;
+    color: #fff;
+}
+
+.selector-card small {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.mode-pills-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.mode-pill-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: 10px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-fast);
+}
+
+.mode-pill-card:hover {
+    border-color: rgba(255, 215, 0, 0.5);
+    background: rgba(255, 215, 0, 0.06);
+}
+
+.mode-pill-card.active {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.25);
+}
+
+.pill-icon {
+    font-size: 18px;
+}
+
+.pill-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.pill-text strong {
+    font-size: 11px;
+    color: #fff;
+}
+
+.pill-text small {
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
+.btn-start-game {
+    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+    color: #000;
+    border: none;
+    width: 100%;
+    padding: 12px;
+    border-radius: 25px;
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+    transition: var(--transition-fast);
+}
+
+.btn-start-game:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 26px rgba(255, 215, 0, 0.6);
+}
+
+/* Responsive Adaptations */
+@media (max-width: 768px) {
+    .mode-pills-grid { grid-template-columns: 1fr; }
+    .card-selector-row { grid-template-columns: 1fr; }
+    .house-east { right: 10px; }
+    .house-west { left: 10px; }
+    .commentary-dock { display: none; }
+    .chozhi-dock { width: 220px; padding: 10px; bottom: 55px; }
+    .bottom-dock { flex-wrap: wrap; height: auto; padding: 6px; }
+}
